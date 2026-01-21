@@ -1,11 +1,11 @@
 
 import React, { useState } from 'react';
 import { usePortfolio } from '../context/PortfolioContext';
-import { Plus, Trash2, Layout, Image, Tag, Calendar, ChevronRight } from 'lucide-react';
+import { Plus, Trash2, Layout, Settings, CheckCircle, XCircle } from 'lucide-react';
 import { Category } from '../types';
 
 const AdminDashboard: React.FC = () => {
-  const { projects, addProject, deleteProject, logout } = usePortfolio();
+  const { projects, addProject, deleteProject, logout, isAvailable, updateAvailability } = usePortfolio();
   const [formData, setFormData] = useState({
     title: '',
     category: 'Graphic Design' as Category,
@@ -47,8 +47,32 @@ const AdminDashboard: React.FC = () => {
         </header>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-12">
-          {/* Add Project Form */}
-          <div className="lg:col-span-1">
+          {/* Settings & Add Project Column */}
+          <div className="lg:col-span-1 space-y-8">
+            {/* Availability Toggle */}
+            <div className="glass p-8 rounded-3xl border-slate-800">
+              <h2 className="text-xl font-bold mb-6 flex items-center gap-2">
+                <Settings size={20} className="text-indigo-500" /> Commission Status
+              </h2>
+              <div className="flex items-center justify-between p-4 bg-slate-950/50 rounded-2xl border border-slate-800">
+                <span className="text-sm font-medium text-slate-300">
+                  {isAvailable ? 'Currently Open' : 'Currently Closed'}
+                </span>
+                <button 
+                  onClick={() => updateAvailability(!isAvailable)}
+                  className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none ${isAvailable ? 'bg-indigo-600' : 'bg-slate-700'}`}
+                >
+                  <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${isAvailable ? 'translate-x-6' : 'translate-x-1'}`} />
+                </button>
+              </div>
+              <p className="mt-4 text-xs text-slate-500 italic">
+                {isAvailable 
+                  ? "Displays 'Available for new opportunities' with a green indicator." 
+                  : "Displays 'Commissions currently closed' with a red indicator."}
+              </p>
+            </div>
+
+            {/* Add Project Form */}
             <div className="glass p-8 rounded-3xl border-slate-800 sticky top-32">
               <h2 className="text-xl font-bold mb-6 flex items-center gap-2">
                 <Plus size={20} className="text-indigo-500" /> Quick Add Project

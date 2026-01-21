@@ -6,7 +6,7 @@ import { ArrowRight, ChevronDown, Award, Zap, Code, Layout } from 'lucide-react'
 import { Link } from 'react-router-dom';
 
 const Home: React.FC = () => {
-  const { projects, testimonials } = usePortfolio();
+  const { projects, testimonials, isAvailable } = usePortfolio();
   const featuredProjects = projects.slice(0, 3);
 
   return (
@@ -18,8 +18,8 @@ const Home: React.FC = () => {
 
         <div className="max-w-4xl text-center">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-slate-800/50 border border-slate-700 text-slate-300 text-xs font-medium mb-8">
-            <span className="w-2 h-2 rounded-full bg-green-500 animate-ping"></span>
-            Available for new opportunities
+            <span className={`w-2 h-2 rounded-full ${isAvailable ? 'bg-green-500 animate-ping' : 'bg-red-500'}`}></span>
+            {isAvailable ? 'Available for new opportunities' : 'Commissions currently closed'}
           </div>
           <h1 className="text-5xl md:text-8xl font-black mb-6 tracking-tight">
             Crafting <span className="gradient-text">Experiences</span> <br /> 

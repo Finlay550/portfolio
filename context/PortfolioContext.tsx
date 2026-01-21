@@ -7,8 +7,10 @@ interface PortfolioContextType {
   projects: Project[];
   testimonials: Testimonial[];
   isAuthenticated: boolean;
+  isAvailable: boolean;
   addProject: (project: Omit<Project, 'id'>) => void;
   deleteProject: (id: string) => void;
+  updateAvailability: (status: boolean) => void;
   login: (password: string) => boolean;
   logout: () => void;
 }
@@ -19,15 +21,21 @@ export const PortfolioProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   const [projects, setProjects] = useState<Project[]>([]);
   const [testimonials, setTestimonials] = useState<Testimonial[]>([]);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isAvailable, setIsAvailable] = useState(true);
 
   useEffect(() => {
     const savedProjects = localStorage.getItem('portfolio_projects');
     const savedAuth = localStorage.getItem('portfolio_auth');
+    const savedAvailability = localStorage.getItem('portfolio_availability');
     
     if (savedProjects) {
       setProjects(JSON.parse(savedProjects));
     } else {
       setProjects(INITIAL_PROJECTS);
+    }
+    
+    if (savedAvailability !== null) {
+      setIsAvailable(savedAvailability === 'true');
     }
     
     setTestimonials(INITIAL_TESTIMONIALS);
@@ -48,8 +56,12 @@ export const PortfolioProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     saveProjects(projects.filter(p => p.id !== id));
   };
 
+  const updateAvailability = (status: boolean) => {
+    setIsAvailable(status);
+    localStorage.setItem('portfolio_availability', String(status));
+  };
+
   const login = (password: string) => {
-    // Specific password update requested by user
     if (password === 'finlay550adminportfolio') {
       setIsAuthenticated(true);
       localStorage.setItem('portfolio_auth', 'true');
@@ -68,8 +80,10 @@ export const PortfolioProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       projects, 
       testimonials, 
       isAuthenticated, 
+      isAvailable,
       addProject, 
       deleteProject, 
+      updateAvailability,
       login, 
       logout 
     }}>
