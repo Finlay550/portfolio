@@ -4,25 +4,35 @@ import react from '@vitejs/plugin-react';
 
 export default defineConfig(({ mode }) => {
   // Load env file based on `mode` in the current working directory.
+  // Using '' as the third argument allows loading all variables from the environment (e.g. Vercel dashboard).
   const env = loadEnv(mode, (process as any).cwd(), '');
   
+  // Create a safe subset of environment variables to expose to the client
+  const processEnv: Record<string, string> = {};
+  Object.keys(env).forEach((key) => {
+    processEnv[key] = env[key];
+  });
+
+  // Ensure Gemini SDK requirement is met
+  processEnv.API_KEY = env.API_KEY || env.VITE_GEMINI_API_KEY || "";
+
   return {
     plugins: [react()],
     define: {
-      // Map all required environment variables to process.env for runtime accessibility
-      'process.env.API_KEY': JSON.stringify(env.API_KEY || env.VITE_GEMINI_API_KEY),
-      'process.env.VITE_FIREBASE_API_KEY': JSON.stringify(env.VITE_FIREBASE_API_KEY),
-      'process.env.VITE_FIREBASE_AUTH_DOMAIN': JSON.stringify(env.VITE_FIREBASE_AUTH_DOMAIN),
-      'process.env.VITE_FIREBASE_DATABASE_URL': JSON.stringify(env.VITE_FIREBASE_DATABASE_URL),
-      'process.env.VITE_FIREBASE_PROJECT_ID': JSON.stringify(env.VITE_FIREBASE_PROJECT_ID),
-      'process.env.VITE_FIREBASE_STORAGE_BUCKET': JSON.stringify(env.VITE_FIREBASE_STORAGE_BUCKET),
-      'process.env.VITE_FIREBASE_MESSAGING_SENDER_ID': JSON.stringify(env.VITE_FIREBASE_MESSAGING_SENDER_ID),
-      'process.env.VITE_FIREBASE_APP_ID': JSON.stringify(env.VITE_FIREBASE_APP_ID),
-      'process.env.VITE_FIREBASE_MEASUREMENT_ID': JSON.stringify(env.VITE_FIREBASE_MEASUREMENT_ID),
+      // This allows the Gemini SDK to find process.env.API_KEY literally
+      'process.env.API_KEY': JSON.stringify(processEnv.API_KEY),
+      // This allows dynamic access like process.env[key] to work in lib/firebase.ts
+      'process.env': JSON.stringify(processEnv),
+      'global': 'globalThis'
     },
     build: {
       outDir: 'dist',
-      sourcemap: false
+      sourcemap: false,
+      target: 'esnext'
+    },
+    server: {
+      host: true,
+      port: 3000
     }
   };
 });
