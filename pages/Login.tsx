@@ -32,18 +32,18 @@ const Login: React.FC = () => {
               <Lock size={32} />
             </div>
             <h1 className="text-3xl font-bold mb-2">Admin Access</h1>
-            <p className="text-slate-400">Enter credentials to manage your portfolio</p>
+            <p className="text-slate-400">Enter your secure credentials to manage finlays.xyz</p>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-6 relative z-10">
             <div className="space-y-2">
-              <label className="text-sm font-medium text-slate-400 ml-1">Password</label>
+              <label className="text-sm font-medium text-slate-400 ml-1">Admin Password</label>
               <input 
                 type="password" 
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 className="w-full bg-slate-950/50 border border-slate-800 rounded-xl px-4 py-4 focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500 outline-none transition-all"
-                placeholder="Hint: admin"
+                placeholder="Enter password..."
                 required
               />
             </div>
@@ -64,7 +64,7 @@ const Login: React.FC = () => {
           </form>
           
           <p className="mt-8 text-center text-slate-500 text-sm">
-            Quick content updates made easy.
+            Content management for finlays.xyz
           </p>
         </div>
       </div>

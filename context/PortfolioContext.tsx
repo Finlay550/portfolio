@@ -49,8 +49,8 @@ export const PortfolioProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   };
 
   const login = (password: string) => {
-    // Simple mock auth - in a real app this would be a backend call
-    if (password === 'admin') {
+    // Specific password update requested by user
+    if (password === 'finlay550adminportfolio') {
       setIsAuthenticated(true);
       localStorage.setItem('portfolio_auth', 'true');
       return true;
