@@ -1,8 +1,10 @@
 
 import React, { useState } from 'react';
-import { Mail, MapPin, Twitter, Github, Linkedin, Send, CheckCircle2 } from 'lucide-react';
+import { Mail, MapPin, Twitter, Github, Linkedin, Send, CheckCircle2, Globe, Laptop } from 'lucide-react';
+import { usePortfolio } from '../context/PortfolioContext';
 
 const Contact: React.FC = () => {
+  const { location, socialLinks } = usePortfolio();
   const [submitted, setSubmitted] = useState(false);
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -10,6 +12,12 @@ const Contact: React.FC = () => {
     setSubmitted(true);
     setTimeout(() => setSubmitted(false), 5000);
   };
+
+  const socials = [
+    { icon: Twitter, link: socialLinks.twitter, label: 'Twitter' },
+    { icon: Github, link: socialLinks.github, label: 'Github' },
+    { icon: Linkedin, link: socialLinks.linkedin, label: 'Linkedin' },
+  ];
 
   return (
     <div className="pt-32 pb-24 px-4">
@@ -37,16 +45,23 @@ const Contact: React.FC = () => {
                 </div>
                 <div>
                   <h4 className="text-slate-500 text-sm font-medium">Based In</h4>
-                  <p className="text-lg font-bold">London, United Kingdom</p>
+                  <p className="text-lg font-bold">{location}</p>
                 </div>
               </div>
             </div>
 
             <div className="flex gap-4">
-              {[Twitter, Github, Linkedin].map((Icon, i) => (
-                <button key={i} className="p-4 bg-slate-900 border border-slate-800 rounded-2xl text-slate-400 hover:text-white hover:border-indigo-500/50 transition-all">
-                  <Icon size={24} />
-                </button>
+              {socials.map((social, i) => (
+                <a 
+                  key={i} 
+                  href={social.link} 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="p-4 bg-slate-900 border border-slate-800 rounded-2xl text-slate-400 hover:text-white hover:border-indigo-500/50 transition-all"
+                  aria-label={social.label}
+                >
+                  <social.icon size={24} />
+                </a>
               ))}
             </div>
           </div>

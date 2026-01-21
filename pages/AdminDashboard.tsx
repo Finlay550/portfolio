@@ -1,12 +1,19 @@
 
 import React, { useState } from 'react';
 import { usePortfolio } from '../context/PortfolioContext';
-import { Plus, Trash2, Layout, Settings, CheckCircle, XCircle } from 'lucide-react';
-import { Category } from '../types';
+import { Plus, Trash2, Layout, Settings, MessageSquare, Globe, Share2, MapPin, UserPlus } from 'lucide-react';
+import { Category, SocialLinks } from '../types';
 
 const AdminDashboard: React.FC = () => {
-  const { projects, addProject, deleteProject, logout, isAvailable, updateAvailability } = usePortfolio();
-  const [formData, setFormData] = useState({
+  const { 
+    projects, addProject, deleteProject, 
+    testimonials, addTestimonial, deleteTestimonial,
+    logout, isAvailable, updateAvailability,
+    location: currentLoc, socialLinks: currentSocials, updateSettings
+  } = usePortfolio();
+
+  // Project Form State
+  const [projData, setProjData] = useState({
     title: '',
     category: 'Graphic Design' as Category,
     description: '',
@@ -15,19 +22,47 @@ const AdminDashboard: React.FC = () => {
     date: new Date().toLocaleDateString('en-US', { month: 'short', year: 'numeric' })
   });
 
-  const handleSubmit = (e: React.FormEvent) => {
+  // Testimonial Form State
+  const [testData, setTestData] = useState({
+    name: '',
+    role: '',
+    content: '',
+    avatar: 'https://i.pravatar.cc/150?u=' + Math.floor(Math.random() * 1000)
+  });
+
+  // Settings Form State
+  const [locInput, setLocInput] = useState(currentLoc);
+  const [socialInputs, setSocialInputs] = useState<SocialLinks>({...currentSocials});
+
+  const handleProjSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     addProject({
-      ...formData,
-      tags: formData.tags.split(',').map(t => t.trim()).filter(t => t !== '')
+      ...projData,
+      tags: projData.tags.split(',').map(t => t.trim()).filter(t => t !== '')
     });
-    setFormData({
-      ...formData,
+    setProjData({
+      ...projData,
       title: '',
       description: '',
       imageUrl: 'https://picsum.photos/800/600?random=' + Math.floor(Math.random() * 1000),
       tags: ''
     });
+  };
+
+  const handleTestSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    addTestimonial(testData);
+    setTestData({
+      name: '',
+      role: '',
+      content: '',
+      avatar: 'https://i.pravatar.cc/150?u=' + Math.floor(Math.random() * 1000)
+    });
+  };
+
+  const handleSettingsSave = () => {
+    updateSettings(locInput, socialInputs);
+    alert('Settings updated successfully!');
   };
 
   return (
@@ -36,7 +71,7 @@ const AdminDashboard: React.FC = () => {
         <header className="flex flex-col md:flex-row justify-between items-start md:items-center mb-12 gap-4">
           <div>
             <h1 className="text-4xl font-black tracking-tight mb-2">Admin <span className="gradient-text">Dashboard</span></h1>
-            <p className="text-slate-400">Manage your portfolio projects and showcase your latest work.</p>
+            <p className="text-slate-400">Manage your portfolio, testimonials, and online presence.</p>
           </div>
           <button 
             onClick={logout}
@@ -46,115 +81,118 @@ const AdminDashboard: React.FC = () => {
           </button>
         </header>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-12">
-          {/* Settings & Add Project Column */}
-          <div className="lg:col-span-1 space-y-8">
-            {/* Availability Toggle */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-12">
+          
+          {/* Left Column - Forms & Settings */}
+          <div className="lg:col-span-4 space-y-8">
+            
+            {/* General Settings */}
             <div className="glass p-8 rounded-3xl border-slate-800">
               <h2 className="text-xl font-bold mb-6 flex items-center gap-2">
-                <Settings size={20} className="text-indigo-500" /> Commission Status
+                <Settings size={20} className="text-indigo-500" /> General Settings
               </h2>
-              <div className="flex items-center justify-between p-4 bg-slate-950/50 rounded-2xl border border-slate-800">
-                <span className="text-sm font-medium text-slate-300">
-                  {isAvailable ? 'Currently Open' : 'Currently Closed'}
-                </span>
-                <button 
-                  onClick={() => updateAvailability(!isAvailable)}
-                  className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none ${isAvailable ? 'bg-indigo-600' : 'bg-slate-700'}`}
-                >
-                  <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${isAvailable ? 'translate-x-6' : 'translate-x-1'}`} />
-                </button>
+              
+              <div className="space-y-6">
+                <div className="space-y-4 pb-6 border-b border-slate-800">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-medium text-slate-300">Commission Status</span>
+                    <button 
+                      onClick={() => updateAvailability(!isAvailable)}
+                      className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none ${isAvailable ? 'bg-indigo-600' : 'bg-slate-700'}`}
+                    >
+                      <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${isAvailable ? 'translate-x-6' : 'translate-x-1'}`} />
+                    </button>
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-xs font-medium text-slate-500 uppercase tracking-wider flex items-center gap-1">
+                      <MapPin size={12} /> Your Location
+                    </label>
+                    <input 
+                      value={locInput}
+                      onChange={e => setLocInput(e.target.value)}
+                      className="w-full bg-slate-950/50 border border-slate-800 rounded-xl px-4 py-2 text-sm focus:border-indigo-500 outline-none" 
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-4">
+                  <label className="text-xs font-medium text-slate-500 uppercase tracking-wider flex items-center gap-1">
+                    <Share2 size={12} /> Social Links
+                  </label>
+                  {Object.keys(socialInputs).map((key) => (
+                    <div key={key} className="space-y-1">
+                      <label className="text-[10px] text-slate-500 capitalize">{key}</label>
+                      <input 
+                        value={(socialInputs as any)[key]}
+                        onChange={e => setSocialInputs({...socialInputs, [key]: e.target.value})}
+                        className="w-full bg-slate-950/50 border border-slate-800 rounded-xl px-3 py-2 text-xs focus:border-indigo-500 outline-none" 
+                        placeholder={`URL for ${key}`}
+                      />
+                    </div>
+                  ))}
+                  <button 
+                    onClick={handleSettingsSave}
+                    className="w-full py-3 bg-slate-800 hover:bg-slate-700 text-white rounded-xl text-sm font-bold transition-all"
+                  >
+                    Save Settings
+                  </button>
+                </div>
               </div>
-              <p className="mt-4 text-xs text-slate-500 italic">
-                {isAvailable 
-                  ? "Displays 'Available for new opportunities' with a green indicator." 
-                  : "Displays 'Commissions currently closed' with a red indicator."}
-              </p>
             </div>
 
-            {/* Add Project Form */}
-            <div className="glass p-8 rounded-3xl border-slate-800 sticky top-32">
+            {/* Quick Add Project */}
+            <div className="glass p-8 rounded-3xl border-slate-800">
               <h2 className="text-xl font-bold mb-6 flex items-center gap-2">
-                <Plus size={20} className="text-indigo-500" /> Quick Add Project
+                <Plus size={20} className="text-indigo-500" /> New Project
               </h2>
-              <form onSubmit={handleSubmit} className="space-y-4">
-                <div className="space-y-1">
-                  <label className="text-xs font-medium text-slate-500 uppercase tracking-wider">Title</label>
-                  <input 
-                    required 
-                    value={formData.title}
-                    onChange={e => setFormData({...formData, title: e.target.value})}
-                    className="w-full bg-slate-950/50 border border-slate-800 rounded-xl px-4 py-3 text-sm focus:border-indigo-500 outline-none" 
-                    placeholder="Project Name"
-                  />
-                </div>
-                <div className="space-y-1">
-                  <label className="text-xs font-medium text-slate-500 uppercase tracking-wider">Category</label>
-                  <select 
-                    value={formData.category}
-                    onChange={e => setFormData({...formData, category: e.target.value as Category})}
-                    className="w-full bg-slate-950/50 border border-slate-800 rounded-xl px-4 py-3 text-sm focus:border-indigo-500 outline-none"
-                  >
-                    <option>Graphic Design</option>
-                    <option>ROBLOX</option>
-                    <option>Lighting</option>
-                  </select>
-                </div>
-                <div className="space-y-1">
-                  <label className="text-xs font-medium text-slate-500 uppercase tracking-wider">Description</label>
-                  <textarea 
-                    required 
-                    value={formData.description}
-                    onChange={e => setFormData({...formData, description: e.target.value})}
-                    className="w-full bg-slate-950/50 border border-slate-800 rounded-xl px-4 py-3 text-sm h-24 focus:border-indigo-500 outline-none resize-none" 
-                    placeholder="Project details..."
-                  />
-                </div>
-                <div className="space-y-1">
-                  <label className="text-xs font-medium text-slate-500 uppercase tracking-wider">Image URL</label>
-                  <input 
-                    value={formData.imageUrl}
-                    onChange={e => setFormData({...formData, imageUrl: e.target.value})}
-                    className="w-full bg-slate-950/50 border border-slate-800 rounded-xl px-4 py-3 text-sm focus:border-indigo-500 outline-none" 
-                    placeholder="https://..."
-                  />
-                </div>
-                <div className="space-y-1">
-                  <label className="text-xs font-medium text-slate-500 uppercase tracking-wider">Tags (comma separated)</label>
-                  <input 
-                    value={formData.tags}
-                    onChange={e => setFormData({...formData, tags: e.target.value})}
-                    className="w-full bg-slate-950/50 border border-slate-800 rounded-xl px-4 py-3 text-sm focus:border-indigo-500 outline-none" 
-                    placeholder="UI, Logo, 3D"
-                  />
-                </div>
-                <button type="submit" className="w-full py-4 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl font-bold transition-all flex items-center justify-center gap-2 mt-4">
-                  Add to Portfolio
-                </button>
+              <form onSubmit={handleProjSubmit} className="space-y-4">
+                <input required value={projData.title} onChange={e => setProjData({...projData, title: e.target.value})} className="w-full bg-slate-950/50 border border-slate-800 rounded-xl px-4 py-3 text-sm focus:border-indigo-500 outline-none" placeholder="Project Name" />
+                <select value={projData.category} onChange={e => setProjData({...projData, category: e.target.value as Category})} className="w-full bg-slate-950/50 border border-slate-800 rounded-xl px-4 py-3 text-sm focus:border-indigo-500 outline-none">
+                  <option>Graphic Design</option>
+                  <option>ROBLOX</option>
+                  <option>Lighting</option>
+                </select>
+                <textarea required value={projData.description} onChange={e => setProjData({...projData, description: e.target.value})} className="w-full bg-slate-950/50 border border-slate-800 rounded-xl px-4 py-3 text-sm h-20 focus:border-indigo-500 outline-none resize-none" placeholder="Project details..." />
+                <input value={projData.tags} onChange={e => setProjData({...projData, tags: e.target.value})} className="w-full bg-slate-950/50 border border-slate-800 rounded-xl px-4 py-3 text-sm focus:border-indigo-500 outline-none" placeholder="Tags (comma separated)" />
+                <button type="submit" className="w-full py-4 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl font-bold transition-all">Add Project</button>
+              </form>
+            </div>
+
+            {/* Quick Add Testimonial */}
+            <div className="glass p-8 rounded-3xl border-slate-800">
+              <h2 className="text-xl font-bold mb-6 flex items-center gap-2">
+                <UserPlus size={20} className="text-indigo-500" /> New Testimonial
+              </h2>
+              <form onSubmit={handleTestSubmit} className="space-y-4">
+                <input required value={testData.name} onChange={e => setTestData({...testData, name: e.target.value})} className="w-full bg-slate-950/50 border border-slate-800 rounded-xl px-4 py-3 text-sm focus:border-indigo-500 outline-none" placeholder="Client Name" />
+                <input required value={testData.role} onChange={e => setTestData({...testData, role: e.target.value})} className="w-full bg-slate-950/50 border border-slate-800 rounded-xl px-4 py-3 text-sm focus:border-indigo-500 outline-none" placeholder="Role / Company" />
+                <textarea required value={testData.content} onChange={e => setTestData({...testData, content: e.target.value})} className="w-full bg-slate-950/50 border border-slate-800 rounded-xl px-4 py-3 text-sm h-20 focus:border-indigo-500 outline-none resize-none" placeholder="Testimonial content..." />
+                <button type="submit" className="w-full py-4 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl font-bold transition-all">Add Testimonial</button>
               </form>
             </div>
           </div>
 
-          {/* Project List */}
-          <div className="lg:col-span-2 space-y-4">
-            <h2 className="text-xl font-bold mb-6 flex items-center gap-2 px-2">
-              <Layout size={20} className="text-indigo-500" /> Current Inventory ({projects.length})
-            </h2>
-            <div className="space-y-4">
-              {projects.map(project => (
-                <div key={project.id} className="bg-slate-900/50 border border-slate-800 p-4 rounded-2xl flex items-center gap-6 group hover:border-slate-700 transition-all">
-                  <img src={project.imageUrl} className="w-24 h-24 object-cover rounded-xl border border-slate-700" alt="" />
-                  <div className="flex-grow min-w-0">
-                    <div className="flex items-center gap-2 mb-1">
-                      <span className="text-[10px] font-bold uppercase tracking-wider text-indigo-400 bg-indigo-400/10 px-2 py-0.5 rounded">
-                        {project.category}
-                      </span>
-                      <span className="text-[10px] text-slate-500">{project.date}</span>
+          {/* Right Column - Inventory Management */}
+          <div className="lg:col-span-8 space-y-12">
+            
+            {/* Projects List */}
+            <section>
+              <h2 className="text-xl font-bold mb-6 flex items-center gap-2 px-2">
+                <Layout size={20} className="text-indigo-500" /> My Projects ({projects.length})
+              </h2>
+              <div className="space-y-4">
+                {projects.map(project => (
+                  <div key={project.id} className="bg-slate-900/50 border border-slate-800 p-4 rounded-2xl flex items-center gap-6 group hover:border-slate-700 transition-all">
+                    <img src={project.imageUrl} className="w-20 h-20 object-cover rounded-xl border border-slate-700" alt="" />
+                    <div className="flex-grow min-w-0">
+                      <div className="flex items-center gap-2 mb-1">
+                        <span className="text-[10px] font-bold uppercase tracking-wider text-indigo-400 bg-indigo-400/10 px-2 py-0.5 rounded">
+                          {project.category}
+                        </span>
+                      </div>
+                      <h3 className="text-lg font-bold text-white truncate">{project.title}</h3>
+                      <p className="text-sm text-slate-400 truncate max-w-md">{project.description}</p>
                     </div>
-                    <h3 className="text-lg font-bold text-white truncate">{project.title}</h3>
-                    <p className="text-sm text-slate-400 truncate max-w-md">{project.description}</p>
-                  </div>
-                  <div className="flex flex-col gap-2">
                     <button 
                       onClick={() => deleteProject(project.id)}
                       className="p-3 bg-red-500/10 text-red-400 hover:bg-red-500 hover:text-white rounded-xl transition-all"
@@ -162,14 +200,37 @@ const AdminDashboard: React.FC = () => {
                       <Trash2 size={18} />
                     </button>
                   </div>
-                </div>
-              ))}
-              {projects.length === 0 && (
-                <div className="text-center py-20 border-2 border-dashed border-slate-800 rounded-3xl">
-                  <p className="text-slate-500">No projects to display. Add your first one!</p>
-                </div>
-              )}
-            </div>
+                ))}
+              </div>
+            </section>
+
+            {/* Testimonials List */}
+            <section>
+              <h2 className="text-xl font-bold mb-6 flex items-center gap-2 px-2">
+                <MessageSquare size={20} className="text-indigo-500" /> Testimonials ({testimonials.length})
+              </h2>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {testimonials.map(testimonial => (
+                  <div key={testimonial.id} className="bg-slate-900/50 border border-slate-800 p-6 rounded-2xl relative group hover:border-slate-700 transition-all">
+                    <button 
+                      onClick={() => deleteTestimonial(testimonial.id)}
+                      className="absolute top-4 right-4 p-2 bg-red-500/10 text-red-400 hover:bg-red-500 hover:text-white rounded-lg transition-all"
+                    >
+                      <Trash2 size={16} />
+                    </button>
+                    <p className="text-sm text-slate-300 italic mb-4">"{testimonial.content}"</p>
+                    <div className="flex items-center gap-3">
+                      <img src={testimonial.avatar} className="w-10 h-10 rounded-full border border-slate-800" alt="" />
+                      <div>
+                        <h4 className="text-sm font-bold text-white">{testimonial.name}</h4>
+                        <p className="text-[10px] text-slate-500">{testimonial.role}</p>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </section>
+
           </div>
         </div>
       </div>

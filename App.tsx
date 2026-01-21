@@ -23,19 +23,23 @@ const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) =
   return <>{children}</>;
 };
 
-const Footer: React.FC = () => (
-  <footer className="py-12 border-t border-slate-900 bg-slate-950 text-slate-500">
-    <div className="max-w-7xl mx-auto px-4 text-center">
-      <div className="flex justify-center gap-8 mb-8">
-        <a href="#" className="hover:text-white transition-colors">Dribbble</a>
-        <a href="#" className="hover:text-white transition-colors">Behance</a>
-        <a href="#" className="hover:text-white transition-colors">LinkedIn</a>
-        <a href="#" className="hover:text-white transition-colors">Twitter</a>
+const Footer: React.FC = () => {
+  const { socialLinks } = usePortfolio();
+  return (
+    <footer className="py-12 border-t border-slate-900 bg-slate-950 text-slate-500">
+      <div className="max-w-7xl mx-auto px-4 text-center">
+        <div className="flex justify-center gap-8 mb-8">
+          <a href={socialLinks.dribbble} target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors">Dribbble</a>
+          <a href={socialLinks.behance} target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors">Behance</a>
+          <a href={socialLinks.linkedin} target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors">LinkedIn</a>
+          <a href={socialLinks.twitter} target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors">Twitter</a>
+          <a href={socialLinks.github} target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors">GitHub</a>
+        </div>
+        <p className="text-sm">© {new Date().getFullYear()} finlays.xyz. All rights reserved.</p>
       </div>
-      <p className="text-sm">© {new Date().getFullYear()} Creative Portfolio Elite. All rights reserved.</p>
-    </div>
-  </footer>
-);
+    </footer>
+  );
+};
 
 const AppRoutes = () => (
   <Routes>

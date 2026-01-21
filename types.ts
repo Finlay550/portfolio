@@ -20,6 +20,14 @@ export interface Testimonial {
   avatar: string;
 }
 
+export interface SocialLinks {
+  twitter: string;
+  github: string;
+  linkedin: string;
+  dribbble: string;
+  behance: string;
+}
+
 export interface ContactFormData {
   name: string;
   email: string;
