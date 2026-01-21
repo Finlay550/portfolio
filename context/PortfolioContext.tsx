@@ -2,11 +2,15 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { Project, Testimonial, SocialLinks } from '../types';
 import { PROJECTS as INITIAL_PROJECTS, TESTIMONIALS as INITIAL_TESTIMONIALS } from '../data';
+import { auth, db } from '../lib/firebase';
+import { onAuthStateChanged, signOut, User } from 'firebase/auth';
+import { ref, onValue, set, push, remove, update } from 'firebase/database';
 
 interface PortfolioContextType {
   projects: Project[];
   testimonials: Testimonial[];
   isAuthenticated: boolean;
+  currentUser: User | null;
   isAvailable: boolean;
   location: string;
   socialLinks: SocialLinks;
@@ -16,7 +20,6 @@ interface PortfolioContextType {
   deleteTestimonial: (id: string) => void;
   updateAvailability: (status: boolean) => void;
   updateSettings: (location: string, socialLinks: SocialLinks) => void;
-  login: (password: string) => boolean;
   logout: () => void;
 }
 
@@ -33,105 +36,126 @@ const PortfolioContext = createContext<PortfolioContextType | undefined>(undefin
 export const PortfolioProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [projects, setProjects] = useState<Project[]>([]);
   const [testimonials, setTestimonials] = useState<Testimonial[]>([]);
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [isAvailable, setIsAvailable] = useState(true);
   const [location, setLocation] = useState('Hertfordshire, UK');
   const [socialLinks, setSocialLinks] = useState<SocialLinks>(DEFAULT_SOCIALS);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const savedProjects = localStorage.getItem('portfolio_projects');
-    const savedTestimonials = localStorage.getItem('portfolio_testimonials');
-    const savedAuth = localStorage.getItem('portfolio_auth');
-    const savedAvailability = localStorage.getItem('portfolio_availability');
-    const savedLocation = localStorage.getItem('portfolio_location');
-    const savedSocials = localStorage.getItem('portfolio_socials');
-    
-    if (savedProjects) {
-      setProjects(JSON.parse(savedProjects));
-    } else {
-      setProjects(INITIAL_PROJECTS);
-    }
+    // Listen for Auth changes
+    const unsubscribeAuth = onAuthStateChanged(auth, (user) => {
+      setCurrentUser(user);
+    });
 
-    if (savedTestimonials) {
-      setTestimonials(JSON.parse(savedTestimonials));
-    } else {
-      setTestimonials(INITIAL_TESTIMONIALS);
-    }
-    
-    if (savedAvailability !== null) {
-      setIsAvailable(savedAvailability === 'true');
-    }
+    // Listen for Database changes
+    const rootRef = ref(db, '/');
+    const unsubscribeDb = onValue(rootRef, (snapshot) => {
+      const data = snapshot.val();
+      if (data) {
+        if (data.projects) {
+          const projectList = Object.entries(data.projects).map(([id, val]) => ({
+            id,
+            ...(val as any)
+          }));
+          setProjects(projectList.reverse());
+        } else {
+          setProjects([]);
+        }
 
-    if (savedLocation) {
-      setLocation(savedLocation);
-    }
+        if (data.testimonials) {
+          const testimonialList = Object.entries(data.testimonials).map(([id, val]) => ({
+            id,
+            ...(val as any)
+          }));
+          setTestimonials(testimonialList);
+        } else {
+          setTestimonials([]);
+        }
 
-    if (savedSocials) {
-      setSocialLinks(JSON.parse(savedSocials));
-    }
-    
-    if (savedAuth === 'true') setIsAuthenticated(true);
+        if (data.settings) {
+          setIsAvailable(data.settings.isAvailable ?? true);
+          setLocation(data.settings.location ?? 'Hertfordshire, UK');
+          setSocialLinks(data.settings.socialLinks ?? DEFAULT_SOCIALS);
+        }
+      } else {
+        // Initialize with default data if empty
+        initializeDefaults();
+      }
+      setLoading(false);
+    });
+
+    return () => {
+      unsubscribeAuth();
+      unsubscribeDb();
+    };
   }, []);
 
-  const saveProjects = (newProjects: Project[]) => {
-    setProjects(newProjects);
-    localStorage.setItem('portfolio_projects', JSON.stringify(newProjects));
-  };
+  const initializeDefaults = () => {
+    const projectsObj: any = {};
+    INITIAL_PROJECTS.forEach(p => {
+      projectsObj[p.id] = { ...p };
+      delete projectsObj[p.id].id;
+    });
 
-  const saveTestimonials = (newTestimonials: Testimonial[]) => {
-    setTestimonials(newTestimonials);
-    localStorage.setItem('portfolio_testimonials', JSON.stringify(newTestimonials));
+    const testimonialsObj: any = {};
+    INITIAL_TESTIMONIALS.forEach(t => {
+      testimonialsObj[t.id] = { ...t };
+      delete testimonialsObj[t.id].id;
+    });
+
+    set(ref(db, '/'), {
+      projects: projectsObj,
+      testimonials: testimonialsObj,
+      settings: {
+        isAvailable: true,
+        location: 'Hertfordshire, UK',
+        socialLinks: DEFAULT_SOCIALS
+      }
+    });
   };
 
   const addProject = (projectData: Omit<Project, 'id'>) => {
-    const newProject = { ...projectData, id: Date.now().toString() };
-    saveProjects([newProject, ...projects]);
+    const projectsRef = ref(db, 'projects');
+    push(projectsRef, projectData);
   };
 
   const deleteProject = (id: string) => {
-    saveProjects(projects.filter(p => p.id !== id));
+    remove(ref(db, `projects/${id}`));
   };
 
   const addTestimonial = (testimonialData: Omit<Testimonial, 'id'>) => {
-    const newTestimonial = { ...testimonialData, id: Date.now().toString() };
-    saveTestimonials([newTestimonial, ...testimonials]);
+    const testimonialsRef = ref(db, 'testimonials');
+    push(testimonialsRef, testimonialData);
   };
 
   const deleteTestimonial = (id: string) => {
-    saveTestimonials(testimonials.filter(t => t.id !== id));
+    remove(ref(db, `testimonials/${id}`));
   };
 
   const updateAvailability = (status: boolean) => {
-    setIsAvailable(status);
-    localStorage.setItem('portfolio_availability', String(status));
+    update(ref(db, 'settings'), { isAvailable: status });
   };
 
   const updateSettings = (newLocation: string, newSocialLinks: SocialLinks) => {
-    setLocation(newLocation);
-    setSocialLinks(newSocialLinks);
-    localStorage.setItem('portfolio_location', newLocation);
-    localStorage.setItem('portfolio_socials', JSON.stringify(newSocialLinks));
-  };
-
-  const login = (password: string) => {
-    if (password === 'finlay550adminportfolio') {
-      setIsAuthenticated(true);
-      localStorage.setItem('portfolio_auth', 'true');
-      return true;
-    }
-    return false;
+    update(ref(db, 'settings'), {
+      location: newLocation,
+      socialLinks: newSocialLinks
+    });
   };
 
   const logout = () => {
-    setIsAuthenticated(false);
-    localStorage.removeItem('portfolio_auth');
+    signOut(auth);
   };
+
+  if (loading) return null;
 
   return (
     <PortfolioContext.Provider value={{ 
       projects, 
       testimonials, 
-      isAuthenticated, 
+      isAuthenticated: !!currentUser,
+      currentUser,
       isAvailable,
       location,
       socialLinks,
@@ -141,7 +165,6 @@ export const PortfolioProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       deleteTestimonial,
       updateAvailability,
       updateSettings,
-      login, 
       logout 
     }}>
       {children}

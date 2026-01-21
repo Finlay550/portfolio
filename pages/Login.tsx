@@ -1,21 +1,31 @@
 
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { usePortfolio } from '../context/PortfolioContext';
+import { auth } from '../lib/firebase';
+import { signInWithEmailAndPassword } from 'firebase/auth';
 import { Lock, LogIn, AlertCircle } from 'lucide-react';
 
 const Login: React.FC = () => {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
-  const { login } = usePortfolio();
+  const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (login(password)) {
+    setLoading(true);
+    setError('');
+    
+    try {
+      // Specified admin email: finlay@finlays.xyz
+      // User must create this user in Firebase Console with password: finlay550adminportfolio
+      await signInWithEmailAndPassword(auth, 'finlay@finlays.xyz', password);
       navigate('/admin');
-    } else {
-      setError('Invalid admin credentials');
+    } catch (err: any) {
+      console.error(err);
+      setError('Invalid admin credentials. Please try again.');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -32,7 +42,7 @@ const Login: React.FC = () => {
               <Lock size={32} />
             </div>
             <h1 className="text-3xl font-bold mb-2">Admin Access</h1>
-            <p className="text-slate-400">Enter your secure credentials to manage finlays.xyz</p>
+            <p className="text-slate-400">Secure access for finlays.xyz</p>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-6 relative z-10">
@@ -44,6 +54,7 @@ const Login: React.FC = () => {
                 onChange={(e) => setPassword(e.target.value)}
                 className="w-full bg-slate-950/50 border border-slate-800 rounded-xl px-4 py-4 focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500 outline-none transition-all"
                 placeholder="Enter password..."
+                disabled={loading}
                 required
               />
             </div>
@@ -57,14 +68,15 @@ const Login: React.FC = () => {
 
             <button 
               type="submit" 
-              className="w-full py-4 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl font-bold text-lg transition-all flex items-center justify-center gap-3"
+              disabled={loading}
+              className="w-full py-4 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl font-bold text-lg transition-all flex items-center justify-center gap-3 disabled:opacity-50"
             >
-              Sign In <LogIn size={20} />
+              {loading ? 'Authenticating...' : 'Sign In'} <LogIn size={20} />
             </button>
           </form>
           
           <p className="mt-8 text-center text-slate-500 text-sm">
-            Content management for finlays.xyz
+            Content management for finlay@finlays.xyz
           </p>
         </div>
       </div>
